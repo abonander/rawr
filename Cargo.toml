@@ -1,6 +1,6 @@
 [package]
 
-name = "raw-rs"
+name = "rawr"
 version = "0.0.1"
 authors = ["Austin Bonander <austin.bonander@gmail.com>"]
 
