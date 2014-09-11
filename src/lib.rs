@@ -3,11 +3,21 @@
 extern crate url;
 extern crate time;
 
+use std::iter::{Chain, Peekable};
 use std::rc::Rc;
+use std::vec::MoveItems;
+
+use self::sub::Subreddit;
+use self::user::{User, Message};
+
 use time::Timespec;
 use url::Url;
 
+
 mod client;
+mod user;
+mod sub;
+mod post;
 
 pub enum RedditResult<T>{
     OK(T),
@@ -61,87 +71,42 @@ impl Session {
 
     pub fn cookie(&self) -> &str {
         self.cookie.as_slice()
-    }  
+    } 
+
+    pub fn inbox(&mut self) -> BatchedIter<Message> {
+        unimplemented!(); 
+    } 
 }
 
-struct User {
-    id: String,
-    name: String,
-    created_utc: Timespec,
-    link: u32,
-    comment: u32,
-    over_18: bool,
-    is_gold: bool,
-    is_mod: bool, 
+/// An iterator that fetches items in batches from an underlying data source.
+/// Its item type must implement `Batched`.
+pub struct BatchedIter<T> {
+    size: u32,
+    current: Peekable<Chain<MoveItems<T>>>,
 }
 
-struct Subreddit {
-    name: String,
-    r_name: String,
-    created_utc: Timespec,
-    description: String,
-}
+impl<T: Batched> Iterator<T> for BatchedIter<T> {
+    fn next(&mut self) -> Option<T> {
+        let next = self.current.next();
 
-impl Subreddit {
-    fn hot(&self) -> Posts { unimplemented!(); }
-    fn new(&self) -> Posts { unimplemented!(); }
-}
+        if self.current.peek().is_none() { 
+            let batch = Batched::batch(next, self.size);
 
-pub struct Posts<'a> {
-    subreddit: &'a Subreddit,
-}
-
-impl<'a> Iterator<Post<'a>> for Posts<'a> {
-    fn next(&mut self) -> Option<Post<'a>> { unimplemented!(); }
-}
-
-pub struct Post<'a> {
-    subreddit: &'a Subreddit,
-    poster: User,
-    created_utc: Timespec,
-    title: String,
-    content: PostContent,
-    karma: u32,       
-}
-
-pub enum PostContent {
-    Link(Url),
-    Text(String),
-}
-
-impl<'a> Post<'a> {
-   fn text(&self) -> Option<&str> {
-        match self.content {
-            Text(ref content) => Some(content.as_slice()),
-            Link(_) => None,
+            if(!batch.is_empty()) {
+                self.current = self.current.chain(batch.move_iter()).peekable();
+            } 
         }
+ 
+        next
     }
-    
-    fn link(&self) -> Option<&Url> {
-        match self.content {
-            Link(ref url) => Some(url),
-            Text(_) => None,
-        }
-    }
-
-    fn comments(&'a self) -> Comments<'a> { unimplemented!(); }
 }
 
-pub struct Comments<'a> {
-    post: &'a Post<'a>,
-}
+pub trait Batched {
+    /// Get the next batch, starting from `last` if provided, the beginning if not.
+    /// If no (more) results are available, return an empty vector.
+    fn batch(last: Option<Self>, size: u32) -> Vec<Self>;
+} 
 
-impl<'a> Iterator<Comment<'a>> for Comments<'a> {
-    fn next(&mut self) -> Option<Comment<'a>> { unimplemented!(); }
-}
-
-pub struct Comment<'a> {
-    post: &'a Post<'a>,
-    commenter: User,
-    created_utc: Timespec,
-    content: String,
-    karma: u32,
-}
 
 #[test]
 fn it_works() {
