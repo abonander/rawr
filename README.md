@@ -1,4 +1,4 @@
-raw-rs
+RAWR
 ======
 
 Reddit API Wrapper for Rust. HTTP-client-agnostic.
