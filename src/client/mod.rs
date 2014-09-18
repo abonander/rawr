@@ -12,7 +12,6 @@ pub use self::teepee::Client as Client;
 mod http;
 mod teepee;
 
-#[macro_export]
 macro_rules! params {
     {$($key:expr: $val:expr,)+} => (
         {

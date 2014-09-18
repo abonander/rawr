@@ -21,7 +21,7 @@ pub enum PostContent {
     Text(String),
 }
 
-impl Post {
+impl<'a> Post<'a> {
    fn text(&self) -> Option<&str> {
         match self.content {
             Text(ref content) => Some(content.as_slice()),
@@ -44,7 +44,7 @@ impl Post {
 }
 
 pub struct Comment<'a> {
-    post: &'a Post,
+    post: &'a Post<'a>,
     name: String,
     pub commenter: User,
     pub created_utc: Timespec,
@@ -53,16 +53,16 @@ pub struct Comment<'a> {
 }
 
 impl<'a> Comment<'a> {
-    fn content(&self) -> &str {
+    pub fn content(&self) -> &str {
         self.content.as_slice()
     }
 
-    fn reply(&'a self, sess: &mut Session, content: &str) -> RedditResult<Comment<'a>> {
+    pub fn reply(&'a self, sess: &mut Session, content: &str) -> RedditResult<Comment<'a>> {
         unimplemented!();
     }
 }
 
 impl<'a> Batched for Comment<'a> {
-    fn batch(last: Option<Comment<'a>>, size: u32) -> Vec<Comment<'a>> { unimplemented!(); }
+    fn batch(last: Option<&Comment<'a>>, size: u32) -> Vec<Comment<'a>> { unimplemented!(); }
 }
 

@@ -11,3 +11,11 @@ git = "https://github.com/chris-morgan/rust-http"
 [dependencies.url]
 
 git = "https://github.com/servo/rust-url"
+
+[profile.dev]
+opt-level = 0  # Controls the --opt-level the compiler builds with
+debug = true
+
+[profile.doc]
+opt-level = 0
+debug = true
