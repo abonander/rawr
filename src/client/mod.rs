@@ -1,7 +1,13 @@
 #![macro_escape]
 
+extern crate serialize;
+
+use self::serialize::json::{Json, ParserError};
 use url::Url;
+
 use std::collections::HashMap;
+use std::io::IoError;
+use std::local_data::Ref;
 
 #[cfg(not(teepee))]
 pub use self::http::Client as Client;
@@ -26,15 +32,43 @@ macro_rules! params {
     );
 }
 
-pub trait HttpClient {
-    /// Make a GET request, returning a string response. The GET parameters should be in the passed URL.
-    fn get(url: &Url) -> String;
+pub static USER_AGENT: &'static str = "rawr v0.1 (github.com/cybergeek94/rawr)";
+pub static BASE_URL: &'static str = "https://www.reddit.com/";
 
-    /// Make a POST request, returning a string response and the session cookie
-    fn post_session(url: &Url, params: HashMap<String, String>) -> (String, String);
+local_data_key!(_modhash: String)
 
-    /// Make a POST request, including `modhash` as the `X-Modhash` header
-    fn post_modhash(url: &Url, params: HashMap<String, String>, modhash: &str) -> String;
+pub type JsonError = ParserError;
+
+pub type JsonResult<T> = Result<T, JsonError>;
+
+pub trait JsonClient {
+    /// Make a GET request, returning a Json response. The GET parameters should be in the passed URL.
+    /// Implementers should update the local modhash by using `set_modhash()`
+    fn get(url: &Url) -> JsonResult<Json>;
+
+    /// Make a POST request, returning the JSON response and the session cookie
+    fn post_session(url: &Url, params: HashMap<String, String>) -> JsonResult<(Json, String)>;
+
+    /// Make a POST request, including the value of `set_modhash` as the `X-Modhash` header
+    /// and the session cookie
+    fn post_modhash(url: &Url, params: HashMap<String, String>, session: &str) -> JsonResult<Json>;
+}
+
+pub fn set_modhash(modhash: &str) {
+    _modhash.replace(Some(modhash.into_string()));
+}
+
+pub fn get_modhash() -> Option<Ref<String>> {
+    _modhash.get()
+}
+
+pub fn has_modhash() -> bool {
+    _modhash.get().is_some()
+}
+
+/// Map a std::io::IoError to a serialize::json::IoError (ParserError variant)
+pub fn err_io_to_json_io(err: IoError) -> ParserError {
+    self::serialize::json::IoError(err.kind, err.desc)
 }
 
 #[test]

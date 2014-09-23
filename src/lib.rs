@@ -5,11 +5,10 @@
 extern crate url;
 extern crate time;
 
-use std::cell::RefCell;
 use std::iter::Peekable;
 use std::vec::MoveItems;
 
-use self::client::{HttpClient, Client};
+use self::client::{JsonClient, Client};
 use self::sub::Subreddit;
 use self::user::{User, Message};
 
@@ -38,68 +37,46 @@ pub enum RedditError {
 
 /// The global reddit instance that holds the client and modhash.
 /// All API endpoints require an instance of this struct to read or update the modhash.
-struct Reddit {
-    client: Client,
-    modhash: RefCell<String>,
-    batch_size: u32,
+
+// Sucks we can't init this 
+local_data_key!(batch_size: u32)
+
+/// Get the batch size or a sensible default
+pub fn get_batch_size() -> u32 {
+    batch_size.get().map_or(50u32, |val| *val)
 }
 
-impl Reddit {
-    pub fn new() -> Reddit {
-        Reddit {
-            client: Client::new(),
-            modhash: RefCell::new(String::new()),
-            batch_size: 50,
-        }
-    }
+pub fn set_batch_size(val: u32) {
+    batch_size.replace(Some(50));
+}
+   
+/// Login to reddit. Returns `Ok(Session)` on success, `Err(AuthError("reason"))` on failure.
+pub fn login(user: &str, pass: &str, remain: bool) -> RedditResult<Session> {
+    let params = params! {
+        "user": user,
+        "pass": pass,
+        "rem": remain,
+    };
 
-    pub fn with_batch_size(batch_size: u32) -> Reddit {
-        Reddit {
-            client: Client::new(),
-            modhash: RefCell::new(String::new()),
-            batch_size: batch_size,
-        }      
-    }
+    unimplemented!(); 
+}
 
-    #[cfg(test)]
-    pub fn with_client(client: Client, batch_size: u32) -> Reddit {
-        Reddit {
-            client: client,
-            modhash: RefCell::new(String::new()),
-            batch_size: batch_size,
-        } 
-    }
-    
-    /// Login to reddit. Returns `Ok(Session)` on success, `Err(AuthError("reason"))` on failure.
-    pub fn login(&self, user: &str, pass: &str, remain: bool) -> RedditResult<Session> {
-        let params = params! {
-            "user": user,
-            "pass": pass,
-            "rem": remain,
-        };
-
-        unimplemented!(); 
-    }
-
-    /// Resume a session with the given cookie string; does not make a request
-    pub fn resume_session(&self, cookie: &str) -> Session {
-        Session {
-            cookie: cookie.into_string(),
-            modhash: None,
-        }
-    }
-
-    /// Find the subreddit with the given /r/ value
-    pub fn sub(&self, sub: &str) -> RedditResult<Subreddit> {
-       unimplemented!(); 
-    }
-
-    /// Find a user with the given /u/ value
-    pub fn user(&self, user: &str) -> RedditResult<User> {
-        unimplemented!();
+/// Resume a session with the given cookie string; does not make a request
+pub fn resume_session(cookie: &str) -> Session {
+    Session {
+        cookie: cookie.into_string(),
     }
 }
 
+/// Find the subreddit with the given /r/ value
+pub fn sub(sub: &str) -> RedditResult<Subreddit> {
+   unimplemented!();
+}
+
+/// Find a user with the given /u/ value
+pub fn user(user: &str) -> RedditResult<User> {
+    unimplemented!();
+}
 
 /// Struct representing an authenticated user session; 
 /// required by any API endpoint that submits changes to reddit, such as posting to subreddits, replying to comments, etc.
@@ -109,7 +86,7 @@ pub struct Session {
 
 impl Session {  
     /// Return info about the current user, retaining the modhash on `self`. 
-    pub fn me(&self, reddit: &mut Reddit) -> User {
+    pub fn me(&self) -> User {
         unimplemented!();
     } 
 
@@ -119,19 +96,19 @@ impl Session {
         self.cookie
     } 
 
-    pub fn inbox(&self, reddit: &mut Reddit) -> BatchedIter<Message> {
+    pub fn inbox(&self) -> BatchedIter<Message> {
         unimplemented!(); 
     }
 
-    pub fn unread(&self, reddit: &mut Reddit) -> BatchedIter<Message> {
+    pub fn unread(&self) -> BatchedIter<Message> {
         unimplemented!();
     }
 
-    pub fn sent(&self, reddit: &mut Reddit) -> BatchedIter<Message> {
+    pub fn sent(&self) -> BatchedIter<Message> {
         unimplemented!();
     }
 
-    pub fn needs_captcha(&self, reddit: &mut Reddit) -> bool {
+    pub fn needs_captcha(&self) -> bool {
         unimplemented!();
     }
 }
