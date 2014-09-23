@@ -10,10 +10,10 @@ use std::io::IoError;
 use std::local_data::Ref;
 
 #[cfg(not(teepee))]
-pub use self::http::Client as Client;
+pub use self::http::Client;
 
 #[cfg(teepee)]
-pub use self::teepee::Client as Client;
+pub use self::teepee::Client;
 
 mod http;
 mod teepee;
@@ -33,7 +33,6 @@ macro_rules! params {
 }
 
 pub static USER_AGENT: &'static str = "rawr v0.1 (github.com/cybergeek94/rawr)";
-pub static BASE_URL: &'static str = "https://www.reddit.com/";
 
 local_data_key!(_modhash: String)
 
@@ -44,14 +43,14 @@ pub type JsonResult<T> = Result<T, JsonError>;
 pub trait JsonClient {
     /// Make a GET request, returning a Json response. The GET parameters should be in the passed URL.
     /// Implementers should update the local modhash by using `set_modhash()`
-    fn get(url: &Url) -> JsonResult<Json>;
+    fn get(&self, url: &Url) -> JsonResult<Json>;
 
     /// Make a POST request, returning the JSON response and the session cookie
-    fn post_session(url: &Url, params: HashMap<String, String>) -> JsonResult<(Json, String)>;
+    fn post_session(&self, url: &Url, params: HashMap<String, String>) -> JsonResult<(Json, String)>;
 
     /// Make a POST request, including the value of `set_modhash` as the `X-Modhash` header
     /// and the session cookie
-    fn post_modhash(url: &Url, params: HashMap<String, String>, session: &str) -> JsonResult<Json>;
+    fn post_modhash(&self, url: &Url, params: HashMap<String, String>, session: &str) -> JsonResult<Json>;
 }
 
 pub fn set_modhash(modhash: &str) {

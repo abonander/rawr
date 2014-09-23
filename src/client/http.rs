@@ -24,7 +24,7 @@ use std::io::{IoResult, IoError};
 pub struct Client;
 
 impl JsonClient for Client {
-    fn get(url: &Url) -> JsonResult<Json> {
+    fn get(&self, url: &Url) -> JsonResult<Json> {
         let request = make_request(Get, url,
             |headers| default_headers(headers, url),
             |_| Ok(()),
@@ -35,14 +35,14 @@ impl JsonClient for Client {
         let result = try!(lift_result_map_err(request));
 
         // Update the modhash
-        result.find(&("modhash".into_string()))
+        result.search(&("modhash".into_string()))
             .and_then(|res| res.as_string())
             .map(|modhash| set_modhash(modhash));
        
         Ok(result)
     }
     
-    fn post_session(url: &Url, params: HashMap<String, String>) -> JsonResult<(Json, String)> {
+    fn post_session(&self, url: &Url, params: HashMap<String, String>) -> JsonResult<(Json, String)> {
         let content = encode_params(&params);
 
         let request = make_request(Post, url,
@@ -60,7 +60,7 @@ impl JsonClient for Client {
         lift_result_map_err(request)
     }
 
-    fn post_modhash(url: &Url, params: HashMap<String, String>, cookie: &str) -> JsonResult<Json> {
+    fn post_modhash(&self, url: &Url, params: HashMap<String, String>, cookie: &str) -> JsonResult<Json> {
         let content = encode_params(&params);
 
         let request = make_request(Post, url,

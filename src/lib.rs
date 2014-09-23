@@ -12,12 +12,18 @@ use self::client::{JsonClient, Client};
 use self::sub::Subreddit;
 use self::user::{User, Message};
 
+use self::url::Url;
+
 mod client;
 pub mod user;
 pub mod sub;
 pub mod post;
 
+pub static BASE_URL: &'static str = "https://www.reddit.com/";
+
 pub type RedditResult<T> = Result<T, RedditError>;
+
+static CLIENT: Client = self::client::Client;
 
 #[deriving(Show)]
 pub enum RedditError {
@@ -28,8 +34,7 @@ pub enum RedditError {
     PermissionDenied,
     /// The requested resource was not found (HTTP 404).
     NotFound,
-    /// This API call requires a modhash returned from another call that 
-    /// takes `&mut Session` as a parameter. 
+    /// This API call requires a modhash 
     NeedModhash,
     /// The submission failed because reddit is requiring the user to solve a captcha.
     NeedCaptcha,
@@ -70,7 +75,14 @@ pub fn resume_session(cookie: &str) -> Session {
 
 /// Find the subreddit with the given /r/ value
 pub fn sub(sub: &str) -> RedditResult<Subreddit> {
-   unimplemented!();
+    let url = {
+        let url = format!("{}r/{}/about.json", BASE_URL, sub);
+        Url::parse(url.as_slice()).unwrap()
+    };
+    
+    let data = CLIENT.get(&url);
+
+        
 }
 
 /// Find a user with the given /u/ value
