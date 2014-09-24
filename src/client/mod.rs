@@ -1,8 +1,7 @@
 #![macro_escape]
 
-extern crate serialize;
 
-use self::serialize::json::{Json, ParserError};
+use serialize::json::{Json, ParserError};
 use url::Url;
 
 use std::collections::HashMap;
@@ -67,7 +66,7 @@ pub fn has_modhash() -> bool {
 
 /// Map a std::io::IoError to a serialize::json::IoError (ParserError variant)
 pub fn err_io_to_json_io(err: IoError) -> ParserError {
-    self::serialize::json::IoError(err.kind, err.desc)
+    super::serialize::json::IoError(err.kind, err.desc)
 }
 
 #[test]

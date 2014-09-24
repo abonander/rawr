@@ -7,7 +7,9 @@ use self::http::headers::host::Host;
 use self::http::headers::request::{ExtensionHeader, HeaderCollection, Header, ContentType};
 use self::http::headers::content_type::MediaType;
 use self::http::method::{Method, Get, Post};
-use super::serialize::json::{Json, from_reader};
+
+
+use serialize::json::{Json, from_reader};
 use url::Url;
 use url::form_urlencoded::serialize as url_encode;
 

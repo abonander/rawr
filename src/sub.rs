@@ -1,13 +1,18 @@
-use super::{BatchedIter, RedditResult, Session};
+use super::{BatchedIter, RedditResult, Session, posix_to_utc};
+
+use json::{FromJson, find_string, find_utc};
+
 use post::{Post, PostContent};
 
-use time::Timespec;
+use serialize::json::Json;
+use time::Tm;
 
 pub struct Subreddit {
+    id: String,
     name: String,
-    r_name: String,
-    pub created_utc: Timespec,
+    pub created_utc: Tm,
     description: String,
+    pub subscribers: u32,
 }
 
 impl Subreddit {
@@ -22,3 +27,16 @@ impl Subreddit {
     }
 
 }
+
+impl FromJson for Subreddit {
+    fn from_json(json: &Json) -> Option<Subreddit> {      
+        let id = find_string(json, "name").map(|id| id.as_string());
+        let name = find_string("display_name");
+        let created_utc = find_utc(json, "created_utc");
+        let description = find_string(json, "public_description");
+        let subscribers = find_u32(json, "subscribers");
+
+    }
+}
+
+

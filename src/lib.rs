@@ -2,16 +2,18 @@
 #![allow(unused_variable)]
 #![allow(dead_code)]
 
+extern crate serialize;
 extern crate url;
 extern crate time;
 
 use std::iter::Peekable;
 use std::vec::MoveItems;
 
-use self::client::{JsonClient, Client};
+use self::client::{JsonClient, Client, JsonResult};
 use self::sub::Subreddit;
 use self::user::{User, Message};
 
+use self::time::{Timespec, Tm, at_utc};
 use self::url::Url;
 
 mod client;
@@ -81,6 +83,10 @@ pub fn sub(sub: &str) -> RedditResult<Subreddit> {
     };
     
     let data = CLIENT.get(&url);
+
+    println!("{}", data);
+
+    unimplemented!();
 
         
 }
@@ -156,6 +162,54 @@ pub trait Batched {
     fn batch(last: Option<&Self>, size: u32) -> Vec<Self>;
 } 
 
+
+/// Convert POSIX time (seconds since January 1, 1970 12:00 AM)
+/// to Tm (UTC)
+pub fn posix_to_utc(seconds: u64) -> Tm {
+    // This cast is a bit dangerous,
+    // as it may result in a negative value due to overflow,
+    // indicating a pre-epoch time instead of the intended time.
+    // However, the point at which POSIX time will overflow a 64-bit integer
+    // is, according to Wolfram|Alpha, about 300 billion years in the future.
+    // I think it's safe to say that we can deal with this later.
+    let tmspec = Timespec::new(seconds as i64, 0);
+    at_utc(tmspec)    
+}
+
+/// Lightweight utilities for working with `serialize::json::Json`.
+pub mod json {
+    use serialize::json::Json;
+
+    /// Get a u64 from the given JSON and key, convert
+    /// it to a Tm in UTC, assuming it is POSIX time
+    pub fn find_utc(json: &Json, key: &str) -> Option<Tm> {
+        find_u64(json, key).map(super::posix_to_utc)
+    }
+
+    #[inline]
+    pub fn find<'a>(json: &'a Json, key: &str) -> Option<&'a Json> {
+        json.find(&(key.into_string()));
+    }
+
+    pub fn find_string(json: &Json, key: &str) -> Option<String> {
+        find(json, key).and_then(|j| j.as_string()).map(|s| j.into_string()) 
+    }
+
+    pub fn find_u64(json: &Json, key: &str) -> Option<u64> {
+        json_find(json, key).and_then(|j| j.as_u64());
+    }
+
+    pub fn find_u32(json: &Json, key: &str) -> Option<u32> {
+        json_find(json, key).and_then(|j| j.as_u32());
+    }
+    
+    /// A lighter-weight implementation alternative of Decodable for 
+    /// structs that just want to deserialize from JSON
+    /// TODO: Implement this using a streaming parser
+    pub trait FromJson {
+        fn from_json(json: &Json) -> Option<Self>;  
+    }
+}
 #[test]
 fn it_works() {
 }
