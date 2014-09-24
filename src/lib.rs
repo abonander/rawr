@@ -42,9 +42,6 @@ pub enum RedditError {
     NeedCaptcha,
 }
 
-/// The global reddit instance that holds the client and modhash.
-/// All API endpoints require an instance of this struct to read or update the modhash.
-
 // Sucks we can't init this 
 local_data_key!(batch_size: u32)
 
