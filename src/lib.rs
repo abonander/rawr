@@ -51,7 +51,7 @@ pub fn get_batch_size() -> u32 {
 }
 
 pub fn set_batch_size(val: u32) {
-    batch_size.replace(Some(50));
+    batch_size.replace(Some(val));
 }
    
 /// Login to reddit. Returns `Ok(Session)` on success, `Err(AuthError("reason"))` on failure.
@@ -84,8 +84,6 @@ pub fn sub(sub: &str) -> RedditResult<Subreddit> {
     println!("{}", data);
 
     unimplemented!();
-
-        
 }
 
 /// Find a user with the given /u/ value
@@ -100,7 +98,7 @@ pub struct Session {
 }
 
 impl Session {  
-    /// Return info about the current user, retaining the modhash on `self`. 
+    /// Return info about the current user. 
     pub fn me(&self) -> User {
         unimplemented!();
     } 
@@ -206,7 +204,4 @@ pub mod json {
     pub trait FromJson {
         fn from_json(json: &Json) -> Option<Self>;  
     }
-}
-#[test]
-fn it_works() {
 }
