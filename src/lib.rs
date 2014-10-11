@@ -1,4 +1,4 @@
-#![feature(macro_rules)]
+#![feature(macro_rules, log_syntax, trace_macros)]
 #![allow(unused_variable)]
 #![allow(dead_code)]
 
@@ -15,6 +15,17 @@ use self::user::{User, Message};
 
 use self::time::{Timespec, Tm, at_utc};
 use self::url::Url;
+
+macro_rules! construct_opt(
+    ($ty:ident { $($name:ident: $val:expr),+, }) => (
+        match ($($val,)+) {
+            ($(Some($name),)+) => Some($ty {
+                $($name: $name,)+    
+            }),
+            _ => None,    
+        }
+    );
+)
 
 mod client;
 pub mod user;
@@ -79,9 +90,13 @@ pub fn sub(sub: &str) -> RedditResult<Subreddit> {
         Url::parse(url.as_slice()).unwrap()
     };
     
-    let data = CLIENT.get(&url);
+    let response = CLIENT.get(&url);
 
-    println!("{}", data);
+    let data = json::find(response, "data");
+
+    let sub: Option<Subreddit> = json::FromJson::from_json(data);
+
+    println!("{}", sub);
 
     unimplemented!();
 }
@@ -174,6 +189,7 @@ pub fn posix_to_utc(seconds: u64) -> Tm {
 /// Lightweight utilities for working with `serialize::json::Json`.
 pub mod json {
     use serialize::json::Json;
+    use time::Tm;
 
     /// Get a u64 from the given JSON and key, convert
     /// it to a Tm in UTC, assuming it is POSIX time
@@ -183,19 +199,19 @@ pub mod json {
 
     #[inline]
     pub fn find<'a>(json: &'a Json, key: &str) -> Option<&'a Json> {
-        json.find(&(key.into_string()));
+        json.find(&(key.into_string()))
     }
 
     pub fn find_string(json: &Json, key: &str) -> Option<String> {
-        find(json, key).and_then(|j| j.as_string()).map(|s| j.into_string()) 
+        find(json, key).and_then(|j| j.as_string()).map(|s| s.into_string()) 
     }
 
     pub fn find_u64(json: &Json, key: &str) -> Option<u64> {
-        json_find(json, key).and_then(|j| j.as_u64());
+        find(json, key).and_then(|j| j.as_u64())
     }
 
     pub fn find_u32(json: &Json, key: &str) -> Option<u32> {
-        json_find(json, key).and_then(|j| j.as_u32());
+        find(json, key).and_then(|j| j.as_u64()).map(|x| x as u32)
     }
     
     /// A lighter-weight implementation alternative of Decodable for 
@@ -205,3 +221,4 @@ pub mod json {
         fn from_json(json: &Json) -> Option<Self>;  
     }
 }
+

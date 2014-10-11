@@ -1,6 +1,6 @@
 use super::{BatchedIter, RedditResult, Session, posix_to_utc};
 
-use json::{FromJson, find_string, find_utc};
+use json::{FromJson, find_string, find_utc, find_u32};
 
 use post::{Post, PostContent};
 
@@ -29,14 +29,16 @@ impl Subreddit {
 }
 
 impl FromJson for Subreddit {
-    fn from_json(json: &Json) -> Option<Subreddit> {      
-        let id = find_string(json, "name").map(|id| id.as_string());
-        let name = find_string("display_name");
-        let created_utc = find_utc(json, "created_utc");
-        let description = find_string(json, "public_description");
-        let subscribers = find_u32(json, "subscribers");
-
-    }
+    fn from_json(json: &Json) -> Option<Subreddit> {
+        construct_opt!(
+            Subreddit{
+                id: find_string(json, "name").map(|id| id.clone()),
+                name: find_string(json, "display_name"),
+                created_utc: find_utc(json, "created_utc"),
+                description: find_string(json, "public_descrption"),
+                subscribers: find_u32(json, "subscribers"),
+	        }
+        )
+    }    
 }
-
 
