@@ -9,7 +9,7 @@ extern crate time;
 use std::iter::Peekable;
 use std::vec::MoveItems;
 
-use self::client::{JsonClient, Client, JsonResult};
+use self::client::{JsonClient, Client, JsonResult, JsonError};
 use self::sub::Subreddit;
 use self::user::{User, Message};
 
@@ -51,6 +51,7 @@ pub enum RedditError {
     NeedModhash,
     /// The submission failed because reddit is requiring the user to solve a captcha.
     NeedCaptcha,
+	MiscError(JsonError),
 }
 
 // Sucks we can't init this 
@@ -90,11 +91,11 @@ pub fn sub(sub: &str) -> RedditResult<Subreddit> {
         Url::parse(url.as_slice()).unwrap()
     };
     
-    let response = CLIENT.get(&url);
+    let response = try!(CLIENT.get(&url).map_err(|e| MiscError(e)));
 
-    let data = json::find(response, "data");
+    let data = json::find(&response, "data");
 
-    let sub: Option<Subreddit> = json::FromJson::from_json(data);
+    let sub: Option<Subreddit> = data.and_then(|j| json::FromJson::from_json(j));
 
     println!("{}", sub);
 
@@ -209,6 +210,10 @@ pub mod json {
     pub fn find_u64(json: &Json, key: &str) -> Option<u64> {
         find(json, key).and_then(|j| j.as_u64())
     }
+
+	pub fn find_f64(json: &Json, key: &str) -> Option<f64> {
+		find(json, key).and_then(|j| j.as_f64())	
+	}
 
     pub fn find_u32(json: &Json, key: &str) -> Option<u32> {
         find(json, key).and_then(|j| j.as_u64()).map(|x| x as u32)
