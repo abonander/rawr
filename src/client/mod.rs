@@ -1,6 +1,5 @@
 #![macro_escape]
 
-
 use serialize::json::{Json, ParserError};
 use url::Url;
 

@@ -32,7 +32,7 @@ pub mod user;
 pub mod sub;
 pub mod post;
 
-pub static BASE_URL: &'static str = "https://www.reddit.com/";
+pub static BASE_URL: &'static str = "https://www.reddit.com";
 
 pub type RedditResult<T> = Result<T, RedditError>;
 
@@ -68,13 +68,15 @@ pub fn set_batch_size(val: u32) {
    
 /// Login to reddit. Returns `Ok(Session)` on success, `Err(AuthError("reason"))` on failure.
 pub fn login(user: &str, pass: &str, remain: bool) -> RedditResult<Session> {
+    let url = make_url("api/login");
+     
     let params = params! {
         "user": user,
         "pass": pass,
         "rem": remain,
     };
 
-    unimplemented!(); 
+    let session = CLIENT.post_session(&url, params);
 }
 
 /// Resume a session with the given cookie string; does not make a request
@@ -86,25 +88,26 @@ pub fn resume_session(cookie: &str) -> Session {
 
 /// Find the subreddit with the given /r/ value
 pub fn sub(sub: &str) -> RedditResult<Subreddit> {
-    let url = {
-        let url = format!("{}r/{}/about.json", BASE_URL, sub);
-        Url::parse(url.as_slice()).unwrap()
-    };
-    
+    use json::{find, FromJson};
+
+    let url = make_url(format!("r/{}/about.json", sub)[]);
+      
     let response = try!(CLIENT.get(&url).map_err(|e| MiscError(e)));
 
-    let data = json::find(&response, "data");
+    let data = find(&response, "data");
 
-    let sub: Option<Subreddit> = data.and_then(|j| json::FromJson::from_json(j));
-
-    println!("{}", sub);
-
-    unimplemented!();
+    data.and_then(|j| FromJson::from_json(j))
+        .ok_or_else(|| NotFound)
 }
 
 /// Find a user with the given /u/ value
 pub fn user(user: &str) -> RedditResult<User> {
     unimplemented!();
+}
+
+pub fn make_url(url_part: &str) -> Url {
+    let url = format!("{}/{}", BASE_URL, url_part);
+    Url::parse(url[]).unwrap()    
 }
 
 /// Struct representing an authenticated user session; 
@@ -121,9 +124,13 @@ impl Session {
 
     /// Get the session cookie to be restored later
     /// This consumes the Session
-    pub fn cookie(self) -> String {
+    pub fn logout(self) -> String {
         self.cookie
-    } 
+    }
+    
+    pub fn cookie(&self) -> &str {
+        self.cookie[]    
+    }
 
     pub fn inbox(&self) -> BatchedIter<Message> {
         unimplemented!(); 
