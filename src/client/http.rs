@@ -44,7 +44,7 @@ impl JsonClient for Client {
         Ok(result)
     }
     
-    fn post_session(&self, url: &Url, params: HashMap<String, String>) -> JsonResult<(Json, String)> {
+    fn post(&self, url: &Url, params: HashMap<String, String>) -> JsonResult<Json> {
         let content = encode_params(&params);
 
         let request = make_request(Post, url,
@@ -54,8 +54,7 @@ impl JsonClient for Client {
             },
             |request| request.write_str(content.as_slice()),
             |response| {
-                let cookie = response.headers.extensions.pop(&("Set-Cookie".into_string())).unwrap_or("".into_string());
-                from_reader(response).map(|json| (json, cookie.clone()))                
+                from_reader(response)                
             }
         );        
 

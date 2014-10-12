@@ -67,16 +67,18 @@ pub fn set_batch_size(val: u32) {
 }
    
 /// Login to reddit. Returns `Ok(Session)` on success, `Err(AuthError("reason"))` on failure.
-pub fn login(user: &str, pass: &str, remain: bool) -> RedditResult<Session> {
+pub fn login(user: &str, pass: &str) -> RedditResult<Session> {
     let url = make_url("api/login");
      
     let params = params! {
         "user": user,
         "pass": pass,
-        "rem": remain,
+        "rem": false, // This will give us the session cookie in the JSON response
     };
 
-    let session = CLIENT.post_session(&url, params);
+    let response = try!(CLIENT.post(&url, params).map_err(|e| MiscError(e)));
+
+    println!("{}", find(&response, "json");
 }
 
 /// Resume a session with the given cookie string; does not make a request

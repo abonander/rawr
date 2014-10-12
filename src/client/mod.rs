@@ -43,8 +43,8 @@ pub trait JsonClient {
     /// Implementers should update the local modhash by using `set_modhash()`
     fn get(&self, url: &Url) -> JsonResult<Json>;
 
-    /// Make a POST request, returning the JSON response and the session cookie
-    fn post_session(&self, url: &Url, params: HashMap<String, String>) -> JsonResult<(Json, String)>;
+    /// Make a POST request, returning the JSON response
+    fn post(&self, url: &Url, params: HashMap<String, String>) -> JsonResult<Json>;
 
     /// Make a POST request, including the value of `set_modhash` as the `X-Modhash` header
     /// and the session cookie
